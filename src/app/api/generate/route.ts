@@ -128,8 +128,8 @@ AUTONOMOUS DECISION RULES:
   for (const activeKey of keys) {
     const ai = new GoogleGenAI({ apiKey: activeKey });
 
-    // Superfast attempt: 2 attempts only (Prevents 3-5 min freeze)
-    for (let attempt = 1; attempt <= 2; attempt++) {
+    // 503 high demand spike bypass karnyakarita 3 attempts with optimal delay
+    for (let attempt = 1; attempt <= 3; attempt++) {
       try {
         const response = await ai.models.generateContent({
           model: "gemini-3.8-flash",
@@ -167,9 +167,9 @@ AUTONOMOUS DECISION RULES:
           lastError,
         );
 
-        // Fast retry: 300ms instead of heavy waiting
+        // 800ms, 1600ms, 2400ms delay - 503 spike bypass karel
         if (lastError.includes("503") || lastError.includes("UNAVAILABLE")) {
-          await wait(300 * attempt);
+          await wait(800 * attempt);
           continue;
         }
         break;
