@@ -111,8 +111,8 @@ AUTONOMOUS DECISION RULES:
   for (const activeKey of keys) {
     const ai = new GoogleGenAI({ apiKey: activeKey });
 
-    // 503 spike bypass sathi 3 automatic attempts
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    // Superfast attempt: 2 attempts only (Prevents 3-5 min freeze)
+    for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         const response = await ai.models.generateContent({
           model: "gemini-3.8-flash",
@@ -121,7 +121,7 @@ AUTONOMOUS DECISION RULES:
             systemInstruction: systemInstruction,
             responseMimeType: "application/json",
             temperature: 0.1,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 1024,
           },
         });
 
@@ -143,9 +143,9 @@ AUTONOMOUS DECISION RULES:
           lastError,
         );
 
-        // Jar 503 asel tar 600ms thambun parat prayatna kara
+        // Fast retry: 300ms instead of heavy waiting
         if (lastError.includes("503") || lastError.includes("UNAVAILABLE")) {
-          await wait(600 * attempt);
+          await wait(300 * attempt);
           continue;
         }
         break;
