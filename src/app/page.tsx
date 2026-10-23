@@ -77,6 +77,7 @@ export default function Home() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [usedVoiceInput, setUsedVoiceInput] = useState(false);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<AnalysisResult | null>(null);
   const [simulationLogs, setSimulationLogs] = useState<string[]>([]);
@@ -95,6 +96,14 @@ export default function Home() {
     { id: "kn", label: "ಕನ್ನಡ", code: "kn-IN", speechLang: "kn-IN" },
     { id: "hi", label: "हिंदी", code: "hi-IN", speechLang: "hi-IN" },
   ] as const;
+
+  const placeholders: Record<string, string> = {
+    auto: "कोणत्याही भाषेत विचारा / Ask in any language / किसी भी भाषा में पूछें (Ctrl+V)...",
+    mr: "कोणत्याही भाषेत विचारा (मराठी, हिंदी, कन्नड, इंग्रजी) किंवा Ctrl+V ने फोटो पेस्ट करा...",
+    hi: "किसी भी भाषा में पूछें (हिंदी, मराठी, कन्नड़, अंग्रेजी) या Ctrl+V से फोटो पेस्ट करें...",
+    kn: "ಯಾವುದೇ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿ (ಕನ್ನಡ, ಮರಾಠಿ, ಹಿಂದಿ, ಇಂಗ್ಲಿಷ್) ಅಥವಾ Ctrl+V ಬಳಸಿ ಫೋಟೋ ಪೇಸ್ಟ್ ಮಾಡಿ...",
+    en: "Ask in any language (English, Marathi, Kannada, Hindi) or paste photo using Ctrl+V...",
+  };
 
   // Ctrl + V Paste Image with Auto-Compression
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
@@ -154,6 +163,7 @@ export default function Home() {
       recognition.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
         setPrompt((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setUsedVoiceInput(true);
       };
 
       recognition.start();
@@ -248,13 +258,14 @@ export default function Home() {
       const json = await res.json();
       setData(json);
 
-      if (json?.overview) {
+      if (json?.overview && usedVoiceInput) {
         speakText(`${json.title}. ${json.overview}`, json.languageCode);
       }
     } catch (err) {
       console.error("Client fetch error:", err);
     } finally {
       setLoading(false);
+      setUsedVoiceInput(false);
     }
   };
 
@@ -349,17 +360,12 @@ export default function Home() {
 
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => {
+              setPrompt(e.target.value);
+              setUsedVoiceInput(false);
+            }}
             onPaste={handlePaste}
-            placeholder={
-              selectedLang === "mr"
-                ? "या झाडाला किंवा त्वचेला काय रोग झाला आहे? विचारा किंवा फोटो पेस्ट करा..."
-                : selectedLang === "kn"
-                  ? "ಈ ಸಸ್ಯಕ್ಕೆ ಅಥವಾ ಚರ್ಮಕ್ಕೆ ಏನಾಗಿದೆ? ಕೇಳಿ ಅಥವಾ ಫೋಟೋ ಪೇಸ್ಟ್ ಮಾಡಿ..."
-                  : selectedLang === "hi"
-                    ? "इस पौधे या त्वचा में क्या समस्या है? पूछें या फोटो पेस्ट करें..."
-                    : "Ask in any language (English, Marathi, Kannada, Hindi) or paste photo using Ctrl+V..."
-            }
+            placeholder={placeholders[selectedLang] || placeholders.auto}
             rows={3}
             className="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-4 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 resize-none transition"
           />
@@ -504,7 +510,7 @@ export default function Home() {
                     }
                     className="w-full text-xs font-medium py-2 px-3 rounded-lg bg-slate-800 text-cyan-300 border border-slate-700 group-hover:border-cyan-600 transition flex items-center justify-center gap-1.5"
                   >
-                    <Volume2 className="w-3 h-3 text-cyan-400" />
+                    <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
                     {card.action}
                   </button>
                 </div>
