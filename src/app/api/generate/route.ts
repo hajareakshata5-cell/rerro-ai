@@ -13,7 +13,17 @@ export async function POST(req: NextRequest) {
     prompt = body.prompt || "";
     imageBase64 = body.image || "";
   } catch {
-    return NextResponse.json({ error: "Invalid JSON format" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid JSON format" },
+      {
+        status: 400,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "DENY",
+        },
+      },
+    );
   }
 
   const keys = [
@@ -24,7 +34,14 @@ export async function POST(req: NextRequest) {
   if (keys.length === 0) {
     return NextResponse.json(
       { error: "Krupaya .env.local madhe GEMINI_API_KEY verify kara" },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "DENY",
+        },
+      },
     );
   }
 
@@ -134,7 +151,14 @@ AUTONOMOUS DECISION RULES:
             .trim();
 
           const parsedJSON = JSON.parse(outputText);
-          return NextResponse.json(parsedJSON);
+          return NextResponse.json(parsedJSON, {
+            status: 200,
+            headers: {
+              "Cache-Control": "no-store, max-age=0",
+              "X-Content-Type-Options": "nosniff",
+              "X-Frame-Options": "DENY",
+            },
+          });
         }
       } catch (err: any) {
         lastError = err?.message || String(err);
@@ -153,19 +177,29 @@ AUTONOMOUS DECISION RULES:
     }
   }
 
-  return NextResponse.json({
-    languageCode: "mr-IN",
-    title: "Google API Server Busy",
-    overview:
-      "Google live servers busy ahet kiva stream madhe adchan aali. Krupaya 2 secondani punha 'Synthesize' dabun try kara.",
-    priorityLevel: "HIGH",
-    cards: [
-      {
-        heading: "Telemetry Log",
-        detail: lastError.substring(0, 180),
-        action: "Re-try",
+  return NextResponse.json(
+    {
+      languageCode: "mr-IN",
+      title: "Google API Server Busy",
+      overview:
+        "Google live servers busy ahet kiva stream madhe adchan aali. Krupaya 2 secondani punha 'Synthesize' dabun try kara.",
+      priorityLevel: "HIGH",
+      cards: [
+        {
+          heading: "Telemetry Log",
+          detail: lastError.substring(0, 180),
+          action: "Re-try",
+        },
+      ],
+      executionPlan: ["Step 1: Click Synthesize Action Grid again"],
+    },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store, max-age=0",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
       },
-    ],
-    executionPlan: ["Step 1: Click Synthesize Action Grid again"],
-  });
+    },
+  );
 }
