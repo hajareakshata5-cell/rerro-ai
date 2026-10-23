@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node -e \"console.log('✔ All 3 PromptWars schema tests passed successfully.')\""
+    "test": "npx tsx __tests__/schema.test.ts"
   },
   "dependencies": {
     "@google/genai": "^2.30.0",
@@ -25,6 +25,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }
